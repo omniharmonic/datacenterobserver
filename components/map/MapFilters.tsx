@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Filter, Search, X, Layers } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import { STATUS_COLORS, STATUS_LABELS, STATUS_LIST } from '@/lib/constants';
 
 export interface Filters {
@@ -15,8 +15,6 @@ interface Props {
   setFilters: (f: Filters) => void;
   total: number;
   visible: number;
-  includeFracTracker: boolean;
-  setIncludeFracTracker: (v: boolean) => void;
 }
 
 export function MapFilters({
@@ -24,8 +22,6 @@ export function MapFilters({
   setFilters,
   total,
   visible,
-  includeFracTracker,
-  setIncludeFracTracker,
 }: Props) {
   const [showStatus, setShowStatus] = useState(false);
 
@@ -106,25 +102,6 @@ export function MapFilters({
           </div>
         )}
       </div>
-
-      {/* Data sources toggle */}
-      <button
-        onClick={() => setIncludeFracTracker(!includeFracTracker)}
-        className={[
-          'flex items-center gap-1.5 bg-bg-surface/90 backdrop-blur-md rounded-lg px-3 py-2 border text-sm transition-colors',
-          includeFracTracker
-            ? 'border-accent-cyan/60 text-accent-cyan'
-            : 'border-border text-slate-300 hover:text-slate-100',
-        ].join(' ')}
-        title={
-          includeFracTracker
-            ? 'Showing curated + FracTracker imports'
-            : 'Currently showing curated only — click to include FracTracker\'s ~1,500 community-tracked sites'
-        }
-      >
-        <Layers size={14} />
-        {includeFracTracker ? 'All sources' : 'Curated only'}
-      </button>
 
       {/* Count + Clear */}
       <div className="flex items-center gap-2 bg-bg-surface/90 backdrop-blur-md rounded-lg px-3 py-2 border border-border text-xs font-display text-slate-400">

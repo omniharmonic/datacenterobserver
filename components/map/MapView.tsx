@@ -50,19 +50,15 @@ export function MapView() {
   const [zoom, setZoom] = useState(4);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({ status: [], states: [], search: '' });
-  // Off by default — the 100 editorial sites are the curated headline view.
-  // Toggling on adds the ~1,500 FracTracker imports (research mode).
-  const [includeFracTracker, setIncludeFracTracker] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const dcParam = searchParams.get('dc');
 
-  const sourcesParam = includeFracTracker ? 'editorial,fractracker' : 'editorial';
-  const { data: markers, isLoading } = useFetch<DcMarker[]>(
-    `/api/data-centers?sources=${sourcesParam}`,
-  );
+  // Server defaults to editorial + fractracker-verified (the research-validated
+  // pile). The unverified FracTracker rows have been deleted from the table.
+  const { data: markers, isLoading } = useFetch<DcMarker[]>('/api/data-centers');
 
   // Deep-link: ?dc=<slug> on first arrival → open the DC's panel and fly to it
   // once both the map and the markers are loaded.
@@ -240,8 +236,6 @@ export function MapView() {
         setFilters={setFilters}
         total={markers?.length ?? 0}
         visible={filtered.length}
-        includeFracTracker={includeFracTracker}
-        setIncludeFracTracker={setIncludeFracTracker}
       />
       <StatsBar />
 

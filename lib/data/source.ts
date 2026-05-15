@@ -332,9 +332,10 @@ export async function listDataCenters(filters: {
   states?: string[];
   search?: string;
   limit?: number;
-  /** Which data sources to include. Default: ['editorial'] only — the 100
-   * hand-curated sites are the primary product. FracTracker (~1,500 row dump
-   * with many unnamed address-only entries) is opt-in research mode. */
+  /** Which data sources to include. Default: editorial + fractracker-verified.
+   * The 100 hand-curated sites plus the ~1,200 FracTracker imports that
+   * survived a per-row research pass (defense contractor HQs, withdrawn
+   * projects, address-only names, etc. have been deleted from the table). */
   sources?: string[];
   /** Minimum location confidence within the included sources. */
   minConfidence?: 'low' | 'medium' | 'high';
@@ -342,8 +343,8 @@ export async function listDataCenters(filters: {
   await hydrate();
   let rows: DataCenter[] = DATA_CENTERS;
 
-  // Source filter (default: editorial only).
-  const sources = filters.sources ?? ['editorial'];
+  // Source filter (default: editorial + research-verified FracTracker).
+  const sources = filters.sources ?? ['editorial', 'fractracker-verified'];
   rows = rows.filter((r) => sources.includes(r.data_source ?? 'editorial'));
 
   // Confidence filter — editorial rows have confidence='high', so they always
