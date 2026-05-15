@@ -41,18 +41,47 @@ async function hydrate(): Promise<void> {
 
   _hydratingPromise = (async () => {
     const sb = getSupabase();
-    // Supabase silently caps .select() at 1000 rows by default; .range() lifts
-    // it. Setting an upper bound of 10k covers us well past the 1.5k FracTracker
-    // import while still being a sane safety ceiling.
-    const RANGE_MAX = 9999;
-    const [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR] = await Promise.all([
-      sb.from('data_centers').select('*').range(0, RANGE_MAX),
-      sb.from('organizations').select('*').range(0, RANGE_MAX),
-      sb.from('officials').select('*').range(0, RANGE_MAX),
-      sb.from('events').select('*').range(0, RANGE_MAX),
-      sb.from('dc_organizations').select('*').range(0, RANGE_MAX),
-      sb.from('org_relationships').select('*').range(0, RANGE_MAX),
+    // Supabase caps a single .select() at db-max-rows (default 1000), so we
+    // paginate in chunks. A 1.6k DC table = 2 round-trips; small tables stop
+    // on the first one.
+    const PAGE = 1000;
+    async function selectAll<T>(table: string): Promise<T[]> {
+      const acc: T[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const to = from + PAGE - 1;
+        const { data, error } = await sb.from(table).select('*').range(from, to);
+        if (error) throw new Error(`Supabase fetch ${table} failed: ${error.message}`);
+        const batch = (data ?? []) as T[];
+        acc.push(...batch);
+        if (batch.length < PAGE) break;
+      }
+      return acc;
+    }
+
+    const [dcsData, orgsData, offsData, evsData, dcOrgsData, orgRelsData] = await Promise.all([
+      selectAll<DataCenter>('data_centers'),
+      selectAll<Organization>('organizations'),
+      selectAll<Official>('officials'),
+      selectAll<Event>('events'),
+      selectAll<{ dc_slug: string; org_slug: string; relationship: string }>(
+        'dc_organizations',
+      ),
+      selectAll<{
+        source_slug: string;
+        target_slug: string;
+        relationship: string;
+        description: string | null;
+        value_usd: number | null;
+        source_url: string | null;
+      }>('org_relationships'),
     ]);
+    // Wrap into the {data, error} shape the rest of hydrate() expects.
+    const dcsR = { data: dcsData, error: null };
+    const orgsR = { data: orgsData, error: null };
+    const offsR = { data: offsData, error: null };
+    const evsR = { data: evsData, error: null };
+    const dcOrgsR = { data: dcOrgsData, error: null };
+    const orgRelsR = { data: orgRelsData, error: null };
 
     for (const r of [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR]) {
       if (r.error) throw new Error(`Supabase fetch failed: ${r.error.message}`);
