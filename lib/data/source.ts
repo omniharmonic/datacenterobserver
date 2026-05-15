@@ -332,15 +332,22 @@ export async function listDataCenters(filters: {
   states?: string[];
   search?: string;
   limit?: number;
-  /** Minimum location confidence. Default 'medium' — drops the ~50 low-confidence
-   * FracTracker imports (city-centroid guesses) from the default map view. */
+  /** Which data sources to include. Default: ['editorial'] only — the 100
+   * hand-curated sites are the primary product. FracTracker (~1,500 row dump
+   * with many unnamed address-only entries) is opt-in research mode. */
+  sources?: string[];
+  /** Minimum location confidence within the included sources. */
   minConfidence?: 'low' | 'medium' | 'high';
 } = {}): Promise<DcMarker[]> {
   await hydrate();
   let rows: DataCenter[] = DATA_CENTERS;
 
+  // Source filter (default: editorial only).
+  const sources = filters.sources ?? ['editorial'];
+  rows = rows.filter((r) => sources.includes(r.data_source ?? 'editorial'));
+
   // Confidence filter — editorial rows have confidence='high', so they always
-  // pass any threshold. Only the low-confidence FracTracker imports get dropped.
+  // pass any threshold.
   const minConf = filters.minConfidence ?? 'medium';
   const rank = { low: 1, medium: 2, high: 3 } as const;
   const threshold = rank[minConf];
@@ -495,6 +502,10 @@ export async function getGraphData(): Promise<{ nodes: GraphNode[]; edges: Graph
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
 
+  // Graph is editorial-only — including the 1.5k FracTracker imports
+  // would make the force-directed layout unreadable.
+  const graphDcs = DATA_CENTERS.filter((d) => (d.data_source ?? 'editorial') === 'editorial');
+
   for (const org of ORGANIZATIONS) {
     nodes.push({
       id: `org:${org.slug}`,
@@ -505,7 +516,7 @@ export async function getGraphData(): Promise<{ nodes: GraphNode[]; edges: Graph
     });
   }
 
-  for (const dc of DATA_CENTERS) {
+  for (const dc of graphDcs) {
     nodes.push({
       id: `dc:${dc.slug}`,
       name: dc.name,
@@ -549,7 +560,9 @@ export async function getGraphData(): Promise<{ nodes: GraphNode[]; edges: Graph
       node_type: off.level,
       state: off.state,
     });
-    const stateDcs = dcByState.get(off.state ?? '') ?? [];
+    const stateDcs = (dcByState.get(off.state ?? '') ?? []).filter(
+      (d) => (d.data_source ?? 'editorial') === 'editorial',
+    );
     for (const dc of stateDcs) {
       edges.push({
         source: `off:${off.id}`,
@@ -564,23 +577,26 @@ export async function getGraphData(): Promise<{ nodes: GraphNode[]; edges: Graph
 
 export async function getStats() {
   await hydrate();
-  const totalDcs = DATA_CENTERS.length;
-  const byStatus = DATA_CENTERS.reduce(
+  // Headline stats reflect the curated editorial dataset — the FracTracker
+  // imports are research-mode and shouldn't inflate the public counters.
+  const curated = DATA_CENTERS.filter((d) => (d.data_source ?? 'editorial') === 'editorial');
+  const totalDcs = curated.length;
+  const byStatus = curated.reduce(
     (acc, d) => {
       acc[d.status] = (acc[d.status] ?? 0) + 1;
       return acc;
     },
     {} as Record<string, number>,
   );
-  const byState = DATA_CENTERS.reduce(
+  const byState = curated.reduce(
     (acc, d) => {
       acc[d.state] = (acc[d.state] ?? 0) + 1;
       return acc;
     },
     {} as Record<string, number>,
   );
-  const totalMw = DATA_CENTERS.reduce((s, d) => s + (d.capacity_mw ?? 0), 0);
-  const totalCapex = DATA_CENTERS.reduce((s, d) => s + (d.estimated_cost_usd ?? 0), 0);
+  const totalMw = curated.reduce((s, d) => s + (d.capacity_mw ?? 0), 0);
+  const totalCapex = curated.reduce((s, d) => s + (d.estimated_cost_usd ?? 0), 0);
   return {
     totalDcs,
     byStatus,
@@ -591,5 +607,7 @@ export async function getStats() {
     totalOrgs: ORGANIZATIONS.length,
     totalEvents: EVENTS.length,
     upcomingEvents: EVENTS.filter((e) => new Date(e.date).getTime() > Date.now()).length,
+    // Surface FracTracker count separately so the About page can mention it.
+    additionalTrackedSites: DATA_CENTERS.length - totalDcs,
   };
 }
