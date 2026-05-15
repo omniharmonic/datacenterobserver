@@ -3,7 +3,7 @@ import { listEvents } from '@/lib/data/source';
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
-  const events = listEvents({
+  const events = await listEvents({
     state: sp.get('state') ?? undefined,
     type: sp.get('type') ?? undefined,
     status: sp.get('status') ?? undefined,

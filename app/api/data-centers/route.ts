@@ -8,6 +8,6 @@ export async function GET(request: NextRequest) {
   const search = sp.get('q') ?? undefined;
   const limit = sp.get('limit') ? Number(sp.get('limit')) : undefined;
 
-  const data = listDataCenters({ status, states, search, limit });
+  const data = await listDataCenters({ status, states, search, limit });
   return NextResponse.json(data);
 }

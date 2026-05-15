@@ -5,14 +5,19 @@ export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get('q')?.toLowerCase().trim();
   if (!q) return NextResponse.json({ data_centers: [], organizations: [], officials: [], events: [] });
 
-  const dcs = listDataCenters({ search: q, limit: 12 });
-  const orgs = listOrganizations()
+  const [dcs, allOrgs, allOfficials, allEvents] = await Promise.all([
+    listDataCenters({ search: q, limit: 12 }),
+    listOrganizations(),
+    listOfficials(),
+    listEvents(),
+  ]);
+  const orgs = allOrgs
     .filter((o) => o.name.toLowerCase().includes(q) || o.slug.includes(q))
     .slice(0, 8);
-  const officials = listOfficials()
+  const officials = allOfficials
     .filter((o) => o.name.toLowerCase().includes(q))
     .slice(0, 8);
-  const events = listEvents()
+  const events = allEvents
     .filter((e) => e.title.toLowerCase().includes(q))
     .slice(0, 8);
 

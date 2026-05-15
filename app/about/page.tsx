@@ -8,8 +8,8 @@ export const metadata = {
     'Mission, methodology, attribution, and open-source roadmap for datacenter.observer.',
 };
 
-export default function AboutPage() {
-  const s = getStats();
+export default async function AboutPage() {
+  const s = await getStats();
   return (
     <div className="max-w-3xl mx-auto px-5 py-10 space-y-10">
       <header>

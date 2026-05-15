@@ -1,85 +1,151 @@
-// Data-access layer. Currently backed by the local seed files; designed so
-// that future Supabase / Postgres implementations can be swapped in by
-// replacing this module without touching the API routes or components.
+// Data-access layer. Backed by Supabase (v0.2+).
+// Strategy: on the first call into this module per serverless instance,
+// hydrate all six tables into module-scoped Maps. Every subsequent call is
+// O(1) in-memory lookup. Vercel Fluid Compute keeps instances warm, so the
+// per-request cost is effectively one shared cold-start fetch.
+//
+// Public function signatures match the v0.1 seed-backed version 1:1 except
+// they are now async. Callers (server components + API routes) await them.
 
-import { DATA_CENTERS } from '@/data/seed/data-centers';
-import { ORGANIZATIONS } from '@/data/seed/organizations';
-import { OFFICIALS } from '@/data/seed/officials';
-import { EVENTS } from '@/data/seed/events';
-import { ORG_RELATIONSHIPS } from '@/data/seed/relationships';
+import { getSupabase } from '@/lib/supabase';
 import type {
   DataCenter,
   Organization,
   Official,
   Event,
+  OrgRelationshipEdge,
   GraphNode,
   GraphEdge,
 } from '@/lib/types';
 
-// ─── Indexes built once at module load ─────────────────────────────────
+// ─── Module-scoped cache (hydrated on first access) ────────────────────
 
-const dcBySlug = new Map(DATA_CENTERS.map((d) => [d.slug, d]));
-const orgBySlug = new Map(ORGANIZATIONS.map((o) => [o.slug, o]));
-const officialById = new Map(OFFICIALS.map((o) => [o.id, o]));
-const eventBySlug = new Map(EVENTS.map((e) => [e.slug, e]));
+let _hydrated = false;
+let _hydratingPromise: Promise<void> | null = null;
 
-const dcByState = new Map<string, DataCenter[]>();
-for (const dc of DATA_CENTERS) {
-  if (!dcByState.has(dc.state)) dcByState.set(dc.state, []);
-  dcByState.get(dc.state)!.push(dc);
-}
+let DATA_CENTERS: DataCenter[] = [];
+let ORGANIZATIONS: Organization[] = [];
+let OFFICIALS: Official[] = [];
+let EVENTS: Event[] = [];
+let ORG_RELATIONSHIPS: OrgRelationshipEdge[] = [];
 
-const eventsByDcSlug = new Map<string, Event[]>();
-for (const ev of EVENTS) {
-  if (ev.data_center_slug) {
-    if (!eventsByDcSlug.has(ev.data_center_slug)) {
-      eventsByDcSlug.set(ev.data_center_slug, []);
+let dcBySlug = new Map<string, DataCenter>();
+let orgBySlug = new Map<string, Organization>();
+let eventBySlug = new Map<string, Event>();
+let dcByState = new Map<string, DataCenter[]>();
+let eventsByDcSlug = new Map<string, Event[]>();
+
+async function hydrate(): Promise<void> {
+  if (_hydrated) return;
+  if (_hydratingPromise) return _hydratingPromise;
+
+  _hydratingPromise = (async () => {
+    const sb = getSupabase();
+    const [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR] = await Promise.all([
+      sb.from('data_centers').select('*'),
+      sb.from('organizations').select('*'),
+      sb.from('officials').select('*'),
+      sb.from('events').select('*'),
+      sb.from('dc_organizations').select('*'),
+      sb.from('org_relationships').select('*'),
+    ]);
+
+    for (const r of [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR]) {
+      if (r.error) throw new Error(`Supabase fetch failed: ${r.error.message}`);
     }
-    eventsByDcSlug.get(ev.data_center_slug)!.push(ev);
-  }
+
+    // Attach organization_slugs to each DC by joining the dc_organizations rows.
+    const dcOrgsByDc = new Map<string, Array<{ slug: string; relationship: string }>>();
+    for (const link of (dcOrgsR.data ?? []) as Array<{
+      dc_slug: string;
+      org_slug: string;
+      relationship: string;
+    }>) {
+      if (!dcOrgsByDc.has(link.dc_slug)) dcOrgsByDc.set(link.dc_slug, []);
+      dcOrgsByDc.get(link.dc_slug)!.push({ slug: link.org_slug, relationship: link.relationship });
+    }
+
+    DATA_CENTERS = ((dcsR.data ?? []) as DataCenter[]).map((d) => ({
+      ...d,
+      organization_slugs: dcOrgsByDc.get(d.slug) as DataCenter['organization_slugs'],
+    }));
+    ORGANIZATIONS = (orgsR.data ?? []) as Organization[];
+    OFFICIALS = (offsR.data ?? []) as Official[];
+    EVENTS = (evsR.data ?? []) as Event[];
+    ORG_RELATIONSHIPS = ((orgRelsR.data ?? []) as Array<{
+      source_slug: string;
+      target_slug: string;
+      relationship: string;
+      description: string | null;
+      value_usd: number | null;
+      source_url: string | null;
+    }>).map((r) => ({
+      source: r.source_slug,
+      target: r.target_slug,
+      relationship: r.relationship as OrgRelationshipEdge['relationship'],
+      description: r.description ?? undefined,
+      value_usd: r.value_usd ?? undefined,
+      source_url: r.source_url ?? undefined,
+    }));
+
+    dcBySlug = new Map(DATA_CENTERS.map((d) => [d.slug, d]));
+    orgBySlug = new Map(ORGANIZATIONS.map((o) => [o.slug, o]));
+    eventBySlug = new Map(EVENTS.map((e) => [e.slug, e]));
+
+    dcByState = new Map<string, DataCenter[]>();
+    for (const dc of DATA_CENTERS) {
+      if (!dcByState.has(dc.state)) dcByState.set(dc.state, []);
+      dcByState.get(dc.state)!.push(dc);
+    }
+
+    eventsByDcSlug = new Map<string, Event[]>();
+    for (const ev of EVENTS) {
+      if (ev.data_center_slug) {
+        if (!eventsByDcSlug.has(ev.data_center_slug)) {
+          eventsByDcSlug.set(ev.data_center_slug, []);
+        }
+        eventsByDcSlug.get(ev.data_center_slug)!.push(ev);
+      }
+    }
+
+    _hydrated = true;
+  })();
+
+  return _hydratingPromise;
 }
 
-// Fallback county → US House district lookup. Populated from public 2023 redistricted
-// maps. Used when dc.house_district isn't set explicitly. Keep keys lowercase.
+// ─── Officials filter logic (unchanged from v0.1) ──────────────────────
+
 const COUNTY_TO_HOUSE_DISTRICT: Record<string, string> = {
   // TX
-  'tx:taylor': 'TX-19',
-  'tx:milam': 'TX-17',
-  'tx:shackelford': 'TX-19',
-  'tx:ellis': 'TX-06',
-  'tx:bell': 'TX-31',
-  'tx:collin': 'TX-03',
+  'tx:taylor': 'TX-19', 'tx:milam': 'TX-17', 'tx:shackelford': 'TX-19',
+  'tx:ellis': 'TX-06', 'tx:bell': 'TX-31', 'tx:collin': 'TX-03',
+  'tx:el paso': 'TX-16', 'tx:potter': 'TX-13', 'tx:hale': 'TX-19',
+  'tx:childress': 'TX-13', 'tx:mitchell': 'TX-11', 'tx:navarro': 'TX-06',
   // TN
   'tn:shelby': 'TN-09',
   // VA
-  'va:loudoun': 'VA-10',
-  'va:prince william': 'VA-07',
+  'va:loudoun': 'VA-10', 'va:prince william': 'VA-07',
+  'va:chesterfield': 'VA-04', 'va:warren': 'VA-06',
   // WI
-  'wi:racine': 'WI-01',
-  'wi:ozaukee': 'WI-06',
-  'wi:dodge': 'WI-06',
+  'wi:racine': 'WI-01', 'wi:ozaukee': 'WI-06', 'wi:dodge': 'WI-06',
   // LA
-  'la:richland parish': 'LA-05',
+  'la:richland parish': 'LA-05', 'la:west feliciana': 'LA-06',
   // IN
-  'in:clark': 'IN-09',
-  'in:st. joseph': 'IN-02',
-  'in:boone': 'IN-04',
+  'in:clark': 'IN-09', 'in:st. joseph': 'IN-02', 'in:boone': 'IN-04',
   // WA
   'wa:grant': 'WA-04',
   // OH
-  'oh:trumbull': 'OH-06',
-  'oh:franklin': 'OH-03',
+  'oh:trumbull': 'OH-06', 'oh:franklin': 'OH-03',
+  'oh:licking': 'OH-12', 'oh:delaware': 'OH-15', 'oh:monroe': 'OH-06',
   // AZ
-  'az:maricopa': 'AZ-05',
-  'az:pinal': 'AZ-06',
+  'az:maricopa': 'AZ-05', 'az:pinal': 'AZ-06',
   // MS
-  'ms:madison': 'MS-02',
+  'ms:madison': 'MS-02', 'ms:desoto': 'MS-01',
   // GA
-  'ga:newton': 'GA-10',
-  'ga:fayette': 'GA-03',
+  'ga:newton': 'GA-10', 'ga:fayette': 'GA-03', 'ga:walton': 'GA-10',
   // IA
-  'ia:pottawattamie': 'IA-03',
-  'ia:linn': 'IA-02',
+  'ia:pottawattamie': 'IA-03', 'ia:linn': 'IA-02',
   // OR
   'or:umatilla': 'OR-02',
   // WY
@@ -93,18 +159,12 @@ const COUNTY_TO_HOUSE_DISTRICT: Record<string, string> = {
   // CA
   'ca:santa clara': 'CA-17',
   // NV
-  'nv:storey': 'NV-02',
-  'nv:clark': 'NV-01',
-  'nv:washoe': 'NV-02',
+  'nv:storey': 'NV-02', 'nv:clark': 'NV-01', 'nv:washoe': 'NV-02',
   // NM
-  'nm:doña ana': 'NM-02',
-  'nm:dona ana': 'NM-02',
+  'nm:doña ana': 'NM-02', 'nm:dona ana': 'NM-02',
   // PA
-  'pa:luzerne': 'PA-08',
-  'pa:dauphin': 'PA-10',
-  'pa:lancaster': 'PA-11',
-  'pa:bucks': 'PA-01',
-  'pa:indiana': 'PA-14',
+  'pa:luzerne': 'PA-08', 'pa:dauphin': 'PA-10', 'pa:lancaster': 'PA-11',
+  'pa:bucks': 'PA-01', 'pa:indiana': 'PA-14',
   // MI
   'mi:washtenaw': 'MI-06',
   // NY
@@ -112,64 +172,28 @@ const COUNTY_TO_HOUSE_DISTRICT: Record<string, string> = {
   // AR
   'ar:crittenden': 'AR-01',
   // NC
-  'nc:catawba': 'NC-10',
-  'nc:richmond': 'NC-09',
-  'nc:rutherford': 'NC-11',
-  'nc:henrico': 'NC-04',
+  'nc:catawba': 'NC-10', 'nc:richmond': 'NC-09',
+  'nc:rutherford': 'NC-11', 'nc:henrico': 'NC-04',
   // AL
-  'al:montgomery': 'AL-02',
-  'al:madison': 'AL-05',
+  'al:montgomery': 'AL-02', 'al:madison': 'AL-05',
   // MN
   'mn:dakota': 'MN-02',
   // MO
-  'mo:clay': 'MO-06',
-  'mo:jackson': 'MO-05',
-  'mo:st. louis': 'MO-01',
+  'mo:clay': 'MO-06', 'mo:jackson': 'MO-05', 'mo:st. louis': 'MO-01',
   // KS
   'ks:shawnee': 'KS-02',
   // NE
   'ne:sarpy': 'NE-02',
   // ND
   'nd:dickey': 'ND-AL',
-  // MS (Southaven is in DeSoto County)
-  'ms:desoto': 'MS-01',
-  // OH (more counties for new DCs)
-  'oh:licking': 'OH-12',
-  'oh:delaware': 'OH-15',
-  'oh:monroe': 'OH-06',
-  // TX (more counties)
-  'tx:el paso': 'TX-16',
-  'tx:potter': 'TX-13',
-  'tx:hale': 'TX-19',
-  'tx:childress': 'TX-13',
-  'tx:mitchell': 'TX-11',
-  'tx:navarro': 'TX-06',
-  // VA
-  'va:chesterfield': 'VA-04',
-  'va:warren': 'VA-06',
   // SC
-  'sc:berkeley': 'SC-01',
-  'sc:dorchester': 'SC-06',
+  'sc:berkeley': 'SC-01', 'sc:dorchester': 'SC-06',
   // IL
-  'il:kane': 'IL-11',
-  'il:dupage': 'IL-08',
-  // LA
-  'la:west feliciana': 'LA-06',
-  // GA additional
-  'ga:walton': 'GA-10',
+  'il:kane': 'IL-11', 'il:dupage': 'IL-08',
   // MD
-  'md:montgomery': 'MD-08',
-  'md:charles': 'MD-05',
+  'md:montgomery': 'MD-08', 'md:charles': 'MD-05',
 };
 
-// Officials shown on a DC detail panel:
-//   - Both US senators for the state (always state-relevant)
-//   - State governor (always state-relevant)
-//   - The ONE US House rep whose district matches dc.house_district (or the
-//     COUNTY_TO_HOUSE_DISTRICT fallback). If neither resolves, no House rep
-//     is shown — better silent than wrong.
-//   - Local officials whose body/title actually references the DC's county or city
-//     (so a Memphis DC card stays Memphis-relevant, not all of Tennessee).
 function resolveOfficialsForDc(dc: DataCenter): { official: Official; level: string }[] {
   const result: { official: Official; level: string }[] = [];
   const stateCode = dc.state;
@@ -181,7 +205,6 @@ function resolveOfficialsForDc(dc: DataCenter): { official: Official; level: str
   for (const o of OFFICIALS) {
     if (o.state !== stateCode) continue;
 
-    // Federal
     if (o.level === 'federal' && o.body === 'US Senate') {
       result.push({ official: o, level: o.level });
       continue;
@@ -192,14 +215,10 @@ function resolveOfficialsForDc(dc: DataCenter): { official: Official; level: str
       }
       continue;
     }
-
-    // State
     if (o.level === 'state') {
       result.push({ official: o, level: o.level });
       continue;
     }
-
-    // Local — only if the body/title intersects the DC's county or city
     if (o.level === 'local') {
       const hay = `${o.body ?? ''} ${o.title ?? ''}`.toLowerCase();
       const countyMatch = county && (hay.includes(county) || hay.includes(`${county} county`));
@@ -209,11 +228,10 @@ function resolveOfficialsForDc(dc: DataCenter): { official: Official; level: str
       }
     }
   }
-
   return result;
 }
 
-// ─── Compact marker shape used by the map view ──────────────────────────
+// ─── Public types ──────────────────────────────────────────────────────
 
 export interface DcMarker {
   id: string;
@@ -234,21 +252,40 @@ export interface DcDetail extends DataCenter {
   events: Event[];
 }
 
-// ─── Public API ─────────────────────────────────────────────────────────
+export interface OrgRelation {
+  relationship: string;
+  description?: string;
+  value_usd?: number;
+  organization: Organization;
+}
 
-export function listDataCenters(filters: {
+export interface OrgDcLink {
+  relationship: string;
+  data_center: DataCenter;
+}
+
+export interface OrgDetail extends Organization {
+  ownedBy: OrgRelation[];
+  controls: OrgRelation[];
+  supplies: OrgRelation[];
+  suppliedBy: OrgRelation[];
+  dataCenters: OrgDcLink[];
+}
+
+const CONTROL_RELS = new Set(['owns', 'acquired', 'subsidiary_of', 'invests_in', 'joint_venture']);
+
+// ─── Public API (all async) ────────────────────────────────────────────
+
+export async function listDataCenters(filters: {
   status?: string[];
   states?: string[];
   search?: string;
   limit?: number;
-} = {}): DcMarker[] {
+} = {}): Promise<DcMarker[]> {
+  await hydrate();
   let rows: DataCenter[] = DATA_CENTERS;
-  if (filters.status?.length) {
-    rows = rows.filter((r) => filters.status!.includes(r.status));
-  }
-  if (filters.states?.length) {
-    rows = rows.filter((r) => filters.states!.includes(r.state));
-  }
+  if (filters.status?.length) rows = rows.filter((r) => filters.status!.includes(r.status));
+  if (filters.states?.length) rows = rows.filter((r) => filters.states!.includes(r.state));
   if (filters.search) {
     const q = filters.search.toLowerCase();
     rows = rows.filter(
@@ -275,7 +312,8 @@ export function listDataCenters(filters: {
   }));
 }
 
-export function getDataCenter(slug: string): DcDetail | null {
+export async function getDataCenter(slug: string): Promise<DcDetail | null> {
+  await hydrate();
   const dc = dcBySlug.get(slug);
   if (!dc) return null;
 
@@ -297,37 +335,18 @@ export function getDataCenter(slug: string): DcDetail | null {
   return { ...dc, organizations, officials, events };
 }
 
-export function listOrganizations(): Organization[] {
+export async function listOrganizations(): Promise<Organization[]> {
+  await hydrate();
   return ORGANIZATIONS;
 }
 
-export function getOrganization(slug: string): Organization | null {
+export async function getOrganization(slug: string): Promise<Organization | null> {
+  await hydrate();
   return orgBySlug.get(slug) ?? null;
 }
 
-export interface OrgRelation {
-  relationship: string;
-  description?: string;
-  value_usd?: number;
-  organization: Organization;
-}
-
-export interface OrgDcLink {
-  relationship: string;
-  data_center: DataCenter;
-}
-
-export interface OrgDetail extends Organization {
-  ownedBy: OrgRelation[];    // edges where this org is target of owns/acquired/subsidiary_of/invests_in
-  controls: OrgRelation[];   // edges where this org is source of owns/acquired/subsidiary_of/invests_in
-  supplies: OrgRelation[];   // outbound supplies / contracted_by / lobbies_for / partners_with / joint_venture
-  suppliedBy: OrgRelation[]; // inbound versions of the above
-  dataCenters: OrgDcLink[];  // DCs that reference this org in organization_slugs
-}
-
-const CONTROL_RELS = new Set(['owns', 'acquired', 'subsidiary_of', 'invests_in', 'joint_venture']);
-
-export function getOrganizationDetail(slug: string): OrgDetail | null {
+export async function getOrganizationDetail(slug: string): Promise<OrgDetail | null> {
+  await hydrate();
   const org = orgBySlug.get(slug);
   if (!org) return null;
 
@@ -370,20 +389,24 @@ export function getOrganizationDetail(slug: string): OrgDetail | null {
   return { ...org, ownedBy, controls, supplies, suppliedBy, dataCenters };
 }
 
-export function listOfficials(filters: { state?: string; level?: string } = {}): Official[] {
+export async function listOfficials(
+  filters: { state?: string; level?: string } = {},
+): Promise<Official[]> {
+  await hydrate();
   let rows = OFFICIALS;
   if (filters.state) rows = rows.filter((o) => o.state === filters.state);
   if (filters.level) rows = rows.filter((o) => o.level === filters.level);
   return rows;
 }
 
-export function listEvents(filters: {
+export async function listEvents(filters: {
   state?: string;
   type?: string;
   status?: string;
   upcoming?: boolean;
   data_center?: string;
-} = {}): Event[] {
+} = {}): Promise<Event[]> {
+  await hydrate();
   let rows = EVENTS.slice();
   if (filters.state) rows = rows.filter((e) => e.state === filters.state);
   if (filters.type) rows = rows.filter((e) => e.type === filters.type);
@@ -396,13 +419,13 @@ export function listEvents(filters: {
   return rows.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-export function getEvent(slug: string): Event | null {
+export async function getEvent(slug: string): Promise<Event | null> {
+  await hydrate();
   return eventBySlug.get(slug) ?? null;
 }
 
-// ─── Graph data ─────────────────────────────────────────────────────────
-
-export function getGraphData(): { nodes: GraphNode[]; edges: GraphEdge[] } {
+export async function getGraphData(): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
+  await hydrate();
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
 
@@ -448,9 +471,9 @@ export function getGraphData(): { nodes: GraphNode[]; edges: GraphEdge[] } {
     }
   }
 
-  // Officials: limit to a representative subset (governors + senators) to keep graph readable
-  const officialSubset = OFFICIALS.filter((o) =>
-    o.title.includes('Governor') || o.title === 'US Senator',
+  // Officials: limit to governors + senators to keep the graph readable
+  const officialSubset = OFFICIALS.filter(
+    (o) => o.title.includes('Governor') || o.title === 'US Senator',
   );
   for (const off of officialSubset) {
     nodes.push({
@@ -460,7 +483,6 @@ export function getGraphData(): { nodes: GraphNode[]; edges: GraphEdge[] } {
       node_type: off.level,
       state: off.state,
     });
-    // Connect officials to data centers in their state
     const stateDcs = dcByState.get(off.state ?? '') ?? [];
     for (const dc of stateDcs) {
       edges.push({
@@ -474,18 +496,23 @@ export function getGraphData(): { nodes: GraphNode[]; edges: GraphEdge[] } {
   return { nodes, edges };
 }
 
-// ─── Stats for nav-bar counter ──────────────────────────────────────────
-
-export function getStats() {
+export async function getStats() {
+  await hydrate();
   const totalDcs = DATA_CENTERS.length;
-  const byStatus = DATA_CENTERS.reduce((acc, d) => {
-    acc[d.status] = (acc[d.status] ?? 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const byState = DATA_CENTERS.reduce((acc, d) => {
-    acc[d.state] = (acc[d.state] ?? 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const byStatus = DATA_CENTERS.reduce(
+    (acc, d) => {
+      acc[d.status] = (acc[d.status] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+  const byState = DATA_CENTERS.reduce(
+    (acc, d) => {
+      acc[d.state] = (acc[d.state] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
   const totalMw = DATA_CENTERS.reduce((s, d) => s + (d.capacity_mw ?? 0), 0);
   const totalCapex = DATA_CENTERS.reduce((s, d) => s + (d.estimated_cost_usd ?? 0), 0);
   return {

@@ -25,8 +25,8 @@ const GROUP_ORDER: { key: OrganizationType; label: string }[] = [
   { key: 'other', label: 'Other' },
 ];
 
-export default function OrganizationsPage() {
-  const orgs = listOrganizations();
+export default async function OrganizationsPage() {
+  const orgs = await listOrganizations();
   const byType = new Map<OrganizationType, Organization[]>();
   for (const o of orgs) {
     if (!byType.has(o.type)) byType.set(o.type, []);

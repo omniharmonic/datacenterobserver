@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
-  const org = getOrganization(slug);
+  const org = await getOrganization(slug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(org);
 }

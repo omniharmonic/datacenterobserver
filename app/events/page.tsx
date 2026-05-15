@@ -6,9 +6,9 @@ export const metadata = {
   description: 'Public comment periods, hearings, protests, and votes for AI data center projects.',
 };
 
-export default function EventsPage() {
+export default async function EventsPage() {
   // Pre-render the initial list server-side so the page is meaningful with JS disabled
-  const initial = listEvents();
+  const initial = await listEvents();
   return (
     <div className="max-w-5xl mx-auto px-5 py-8">
       <header className="mb-8">

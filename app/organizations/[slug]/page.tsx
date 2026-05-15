@@ -9,8 +9,9 @@ import {
 } from '@/lib/data/source';
 import { NODE_COLORS, STATUS_COLORS, STATUS_LABELS } from '@/lib/constants';
 
-export function generateStaticParams() {
-  return listOrganizations().map((o) => ({ slug: o.slug }));
+export async function generateStaticParams() {
+  const orgs = await listOrganizations();
+  return orgs.map((o) => ({ slug: o.slug }));
 }
 
 export async function generateMetadata({
@@ -19,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const org = getOrganizationDetail(slug);
+  const org = await getOrganizationDetail(slug);
   if (!org) return { title: 'Organization — datacenter.observer' };
   return {
     title: `${org.name} — datacenter.observer`,
@@ -35,7 +36,7 @@ export default async function OrganizationPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const org = getOrganizationDetail(slug);
+  const org = await getOrganizationDetail(slug);
   if (!org) notFound();
 
   const color = NODE_COLORS[org.type] ?? '#94A3B8';
