@@ -58,13 +58,26 @@ export default async function AboutPage() {
           repo welcomes pull requests.
         </p>
         <p className="text-sm text-slate-400 leading-relaxed mt-3">
-          The data layer is designed for incremental upgrade. The data pipeline (
+          The data layer (
           <code className="bg-bg-elevated px-1.5 py-0.5 rounded text-[12px] text-slate-200">
             lib/data/source.ts
           </code>
-          ) currently reads typed seed files; an upcoming version will swap in Supabase + Postgres
-          with PostGIS, automated ingestion from FracTracker's ArcGIS feature service, and
-          Geocodio-resolved federal/state official lookups for every site.
+          ) is now backed by Supabase Postgres with public-read row-level security. Each
+          serverless instance hydrates the full dataset on cold start and serves O(1) lookups
+          thereafter. Migrations live in{' '}
+          <code className="bg-bg-elevated px-1.5 py-0.5 rounded text-[12px] text-slate-200">
+            supabase/migrations/
+          </code>
+          ; the seed pipeline in{' '}
+          <code className="bg-bg-elevated px-1.5 py-0.5 rounded text-[12px] text-slate-200">
+            scripts/seed-supabase.ts
+          </code>{' '}
+          is idempotent and re-runnable from typed seed files.
+        </p>
+        <p className="text-sm text-slate-400 leading-relaxed mt-3">
+          Still on the roadmap: PostGIS geospatial indexes for radius queries, automated
+          ingestion from FracTracker's ArcGIS feature service, and Geocodio-resolved
+          federal/state/local official lookups keyed off each site's parcel address.
         </p>
       </section>
 
