@@ -75,9 +75,21 @@ export default async function AboutPage() {
           is idempotent and re-runnable from typed seed files.
         </p>
         <p className="text-sm text-slate-400 leading-relaxed mt-3">
-          Still on the roadmap: PostGIS geospatial indexes for radius queries, automated
-          ingestion from FracTracker's ArcGIS feature service, and Geocodio-resolved
-          federal/state/local official lookups keyed off each site's parcel address.
+          The dataset is augmented by three automated pipelines:{' '}
+          <strong className="text-slate-200">PostGIS</strong> powers the{' '}
+          <code className="bg-bg-elevated px-1.5 py-0.5 rounded text-[12px] text-slate-200">
+            /api/nearby
+          </code>{' '}
+          radius queries via a GIST-indexed geography column.{' '}
+          <strong className="text-slate-200">FracTracker Alliance</strong>'s public dataset of ~1,500 US
+          sites is re-ingested daily from their CSV feed (Vercel Cron, 06:00 UTC); imported rows
+          carry the{' '}
+          <code className="bg-bg-elevated px-1.5 py-0.5 rounded text-[12px] text-slate-200">
+            ft-
+          </code>{' '}
+          slug prefix and never overwrite editorial entries.{' '}
+          <strong className="text-slate-200">Geocodio</strong> resolves the US House district for each
+          site weekly (Mon 07:00 UTC) so a Memphis project pings only Steve Cohen, not all nine TN reps.
         </p>
       </section>
 
