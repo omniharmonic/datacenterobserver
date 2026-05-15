@@ -7,6 +7,7 @@ import {
   useState,
   useCallback,
 } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Map, Marker, NavigationControl, GeolocateControl, type MapRef } from 'react-map-gl/maplibre';
 import Supercluster from 'supercluster';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -50,7 +51,46 @@ export function MapView() {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({ status: [], states: [], search: '' });
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const dcParam = searchParams.get('dc');
+
   const { data: markers, isLoading } = useFetch<DcMarker[]>('/api/data-centers');
+
+  // Deep-link: ?dc=<slug> on first arrival → open the DC's panel and fly to it
+  // once both the map and the markers are loaded.
+  const handledDeepLinkRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!dcParam) return;
+    if (handledDeepLinkRef.current === dcParam) return;
+    if (!markers) return;
+    const dc = markers.find((m) => m.slug === dcParam);
+    if (!dc) return;
+
+    handledDeepLinkRef.current = dcParam;
+    setSelectedSlug(dc.slug);
+    // Defer flyTo so the map is mounted
+    const tryFly = () => {
+      const m = mapRef.current?.getMap();
+      if (m) {
+        m.flyTo({ center: [dc.longitude, dc.latitude], zoom: 10, duration: 1200 });
+      } else {
+        setTimeout(tryFly, 100);
+      }
+    };
+    tryFly();
+  }, [dcParam, markers]);
+
+  // Strip ?dc= from the URL when the panel is closed so refreshing doesn't re-open it.
+  const closePanel = useCallback(() => {
+    setSelectedSlug(null);
+    if (searchParams.has('dc')) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete('dc');
+      router.replace(`${pathname}${next.toString() ? `?${next.toString()}` : ''}`, { scroll: false });
+    }
+  }, [router, pathname, searchParams]);
 
   const filtered: DcMarker[] = useMemo(() => {
     if (!markers) return [];
@@ -199,7 +239,7 @@ export function MapView() {
       )}
 
       {selectedSlug && (
-        <DetailPanel slug={selectedSlug} onClose={() => setSelectedSlug(null)} />
+        <DetailPanel slug={selectedSlug} onClose={closePanel} />
       )}
     </div>
   );

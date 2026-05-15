@@ -384,6 +384,14 @@ function NodePanel({
             View full profile <ArrowRight size={11} />
           </Link>
         )}
+        {node.category === 'data_center' && (
+          <Link
+            href={`/?dc=${node.id.replace(/^dc:/, '')}`}
+            className="inline-flex items-center gap-1 text-[11px] font-display uppercase tracking-widest text-accent-cyan hover:underline"
+          >
+            View on map <ArrowRight size={11} />
+          </Link>
+        )}
         {node.metric != null && (
           <div className="bg-bg-elevated rounded px-2 py-1.5">
             <p className="text-[10px] uppercase tracking-widest text-slate-500">
@@ -410,6 +418,12 @@ function NodePanel({
               const other = nodeById.get(otherId);
               if (!other) return null;
               const orgSlug = other.category === 'organization' ? other.id.replace(/^org:/, '') : null;
+              const dcSlug = other.category === 'data_center' ? other.id.replace(/^dc:/, '') : null;
+              const linkHref = orgSlug
+                ? `/organizations/${orgSlug}`
+                : dcSlug
+                ? `/?dc=${dcSlug}`
+                : null;
               const body = (
                 <>
                   <div className="min-w-0">
@@ -427,9 +441,9 @@ function NodePanel({
               );
               return (
                 <li key={`${sId}-${tId}-${e.relationship}-${i}`}>
-                  {orgSlug ? (
+                  {linkHref ? (
                     <Link
-                      href={`/organizations/${orgSlug}`}
+                      href={linkHref}
                       className="flex items-center justify-between gap-2 bg-bg-elevated hover:bg-white/5 rounded px-2 py-1.5 text-xs"
                     >
                       {body}

@@ -98,11 +98,9 @@ export function EventsClient({ initial }: Props) {
       </div>
 
       <ul className="space-y-2">
-        {filtered.map((ev) => (
-          <li
-            key={ev.slug}
-            className="bg-bg-surface border border-border hover:border-slate-700 rounded-lg p-4 transition-colors"
-          >
+        {filtered.map((ev) => {
+          const primaryHref = ev.url ?? ev.source_url;
+          const inner = (
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -122,7 +120,7 @@ export function EventsClient({ initial }: Props) {
                     <span className="text-[10px] text-slate-500">· {ev.issue_category}</span>
                   )}
                 </div>
-                <h3 className="font-display text-lg font-semibold text-slate-100 leading-tight">
+                <h3 className="font-display text-lg font-semibold text-slate-100 leading-tight group-hover:text-accent-cyan transition-colors">
                   {ev.title}
                 </h3>
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-400">
@@ -139,16 +137,11 @@ export function EventsClient({ initial }: Props) {
                       {ev.location}
                     </span>
                   )}
-                  {ev.url && (
-                    <a
-                      href={ev.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-accent-cyan hover:underline"
-                    >
+                  {primaryHref && (
+                    <span className="flex items-center gap-1 text-accent-cyan">
                       <ExternalLink size={12} />
-                      Details
-                    </a>
+                      Open source
+                    </span>
                   )}
                 </div>
                 {ev.description && (
@@ -160,8 +153,24 @@ export function EventsClient({ initial }: Props) {
                 <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-0.5">{ev.state}</p>
               </div>
             </div>
-          </li>
-        ))}
+          );
+          return (
+            <li key={ev.slug}>
+              {primaryHref ? (
+                <a
+                  href={primaryHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block bg-bg-surface border border-border hover:border-accent-cyan/40 rounded-lg p-4 transition-colors"
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div className="block bg-bg-surface border border-border rounded-lg p-4">{inner}</div>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       {filtered.length === 0 && (

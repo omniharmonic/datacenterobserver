@@ -174,27 +174,46 @@ export function DetailPanel({ slug, onClose }: Props) {
             {dc.events.length > 0 && (
               <Section title="Upcoming events" icon={CalendarDays}>
                 <ul className="space-y-2">
-                  {dc.events.map((ev) => (
-                    <li key={ev.slug} className="bg-bg-elevated rounded-md px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-slate-100 leading-snug">{ev.title}</p>
-                        <span className="text-[10px] text-accent-cyan font-display whitespace-nowrap">
-                          {fmtDate(ev.date)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
-                        <span>{EVENT_TYPE_LABELS[ev.type] ?? ev.type}</span>
-                        <span>·</span>
-                        <span>{EVENT_STATUS_LABELS[ev.status] ?? ev.status}</span>
-                        {ev.location && (
-                          <>
-                            <span>·</span>
-                            <span className="truncate">{ev.location}</span>
-                          </>
+                  {dc.events.map((ev) => {
+                    const href = ev.url ?? ev.source_url;
+                    const body = (
+                      <>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm text-slate-100 leading-snug">{ev.title}</p>
+                          <span className="text-[10px] text-accent-cyan font-display whitespace-nowrap">
+                            {fmtDate(ev.date)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
+                          <span>{EVENT_TYPE_LABELS[ev.type] ?? ev.type}</span>
+                          <span>·</span>
+                          <span>{EVENT_STATUS_LABELS[ev.status] ?? ev.status}</span>
+                          {ev.location && (
+                            <>
+                              <span>·</span>
+                              <span className="truncate">{ev.location}</span>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    );
+                    return (
+                      <li key={ev.slug}>
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block bg-bg-elevated hover:bg-white/5 rounded-md px-3 py-2.5 transition-colors"
+                          >
+                            {body}
+                          </a>
+                        ) : (
+                          <div className="block bg-bg-elevated rounded-md px-3 py-2.5">{body}</div>
                         )}
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
                 <Link
                   href="/events"
