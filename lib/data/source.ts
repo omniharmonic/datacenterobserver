@@ -75,25 +75,18 @@ async function hydrate(): Promise<void> {
         source_url: string | null;
       }>('org_relationships'),
     ]);
-    // Wrap into the {data, error} shape the rest of hydrate() expects.
-    const dcsR = { data: dcsData, error: null };
-    const orgsR = { data: orgsData, error: null };
-    const offsR = { data: offsData, error: null };
-    const evsR = { data: evsData, error: null };
-    const dcOrgsR = { data: dcOrgsData, error: null };
-    const orgRelsR = { data: orgRelsData, error: null };
-
-    for (const r of [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR]) {
-      if (r.error) throw new Error(`Supabase fetch failed: ${r.error.message}`);
-    }
+    // Wrap into the same {data} shape downstream code expects. (selectAll
+    // throws on error, so no error field needed.)
+    const dcsR = { data: dcsData };
+    const orgsR = { data: orgsData };
+    const offsR = { data: offsData };
+    const evsR = { data: evsData };
+    const dcOrgsR = { data: dcOrgsData };
+    const orgRelsR = { data: orgRelsData };
 
     // Attach organization_slugs to each DC by joining the dc_organizations rows.
     const dcOrgsByDc = new Map<string, Array<{ slug: string; relationship: string }>>();
-    for (const link of (dcOrgsR.data ?? []) as Array<{
-      dc_slug: string;
-      org_slug: string;
-      relationship: string;
-    }>) {
+    for (const link of dcOrgsR.data) {
       if (!dcOrgsByDc.has(link.dc_slug)) dcOrgsByDc.set(link.dc_slug, []);
       dcOrgsByDc.get(link.dc_slug)!.push({ slug: link.org_slug, relationship: link.relationship });
     }
