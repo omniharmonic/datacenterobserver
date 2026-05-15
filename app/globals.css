@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #0a0f1c;
+    --bg-surface: #111827;
+    --bg-elevated: #1f2937;
+    --accent-cyan: #22d3ee;
+    --accent-cyan-dim: #0e7490;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #1e293b;
+    --panel-width: 440px;
+  }
+
+  html,
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100%;
+  }
+
+  body {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  .maplibregl-popup-content {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    font-family: var(--font-body), system-ui, sans-serif;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+  .maplibregl-popup-tip {
+    border-top-color: var(--bg-surface) !important;
+  }
+  .maplibregl-ctrl button {
+    background-color: var(--bg-surface) !important;
+  }
+  .maplibregl-ctrl button:hover {
+    background-color: var(--bg-elevated) !important;
+  }
+  .maplibregl-ctrl-attrib {
+    background: rgba(10, 15, 28, 0.6) !important;
+    color: var(--text-muted) !important;
+  }
+  .maplibregl-ctrl-attrib a {
+    color: var(--text-secondary) !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.dc-marker {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 8px currentColor;
+  transition: transform 120ms ease;
+}
+.dc-marker::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: pulse-ring 2.6s ease-out infinite;
+  z-index: -1;
+}
+.dc-marker.is-static::before {
+  display: none;
+}
+.dc-marker:hover {
+  transform: scale(1.25);
+}
+.dc-marker.is-selected {
+  transform: scale(1.35);
+  box-shadow: 0 0 0 2px var(--accent-cyan), 0 0 12px currentColor;
+}
+
+.cluster-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(34, 211, 238, 0.18);
+  color: #e0f2fe;
+  border: 1.5px solid rgba(34, 211, 238, 0.55);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-display), monospace;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 120ms ease, background 120ms ease;
+}
+.cluster-marker:hover {
+  background: rgba(34, 211, 238, 0.32);
+  transform: scale(1.06);
+}
+
+.panel-shadow {
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+}
+
+.prose-doc h1,
+.prose-doc h2,
+.prose-doc h3 {
+  font-family: var(--font-display), monospace;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.prose-doc h1 {
+  font-size: 1.75rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+.prose-doc h2 {
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--accent-cyan);
+}
+.prose-doc h3 {
+  font-size: 1rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.prose-doc p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0.75rem 0;
+}
+.prose-doc a {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-doc ul,
+.prose-doc ol {
+  color: var(--text-secondary);
+  padding-left: 1.4rem;
+  margin: 0.75rem 0;
+}
+.prose-doc li {
+  margin: 0.25rem 0;
+}
+.prose-doc code {
+  font-family: var(--font-display), monospace;
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  color: #e2e8f0;
+}
+.prose-doc strong {
+  color: var(--text-primary);
+}
+.prose-doc blockquote {
+  border-left: 3px solid var(--accent-cyan-dim);
+  padding-left: 1rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 1rem 0;
+}
