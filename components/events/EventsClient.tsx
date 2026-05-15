@@ -11,8 +11,18 @@ interface Props {
 
 const TYPES = Object.keys(EVENT_TYPE_LABELS);
 
+// Treat a 'YYYY-MM-DD' string as a *local* calendar date, not UTC. Without
+// this, new Date('2026-06-09') becomes June 9 at 00:00 UTC, which renders
+// as June 8 in any timezone west of UTC. Events have a calendar day, not
+// a wall-clock moment — they happen on that day in their local timezone.
+function parseLocalDate(d: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(d);
+}
+
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('en-US', {
+  return parseLocalDate(d).toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -21,8 +31,10 @@ function fmtDate(d: string) {
 }
 
 function timeUntil(d: string): string | null {
-  const ms = new Date(d).getTime() - Date.now();
-  const days = Math.round(ms / 86_400_000);
+  const target = parseLocalDate(d);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((target.getTime() - today.getTime()) / 86_400_000);
   if (days < 0) return null;
   if (days === 0) return 'Today';
   if (days === 1) return 'Tomorrow';

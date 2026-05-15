@@ -989,4 +989,64 @@ export const ORGANIZATIONS: Organization[] = [
     description: 'Subsidiary of Fortis Inc.; powers the Tucson and southern Arizona DC corridor.',
     website: 'https://www.tep.com',
   },
+
+  // ── Pass-5 enrichments: corporate/financial backers surfaced for editorial sites ──
+
+  // Crusoe / Project Jade backing
+  { slug: 'tallgrass-energy', name: 'Tallgrass Energy', type: 'energy_utility', description: 'Midstream + gas-fired generation operator; JV with Crusoe on the 2.7 GW BFC Power / Cheyenne Power Hub.', website: 'https://www.tallgrass.com' },
+  { slug: 'blackstone-infrastructure', name: 'Blackstone Infrastructure Partners', type: 'pe_firm', description: 'Blackstone real-assets arm; majority owner of Tallgrass Energy.', website: 'https://www.blackstone.com' },
+  { slug: 'bloom-energy', name: 'Bloom Energy', type: 'tech_company', description: 'Solid-oxide fuel-cell supplier; powers part of Project Jade.', website: 'https://www.bloomenergy.com', ticker: 'BE' },
+
+  // Project Sail (Coweta GA)
+  { slug: 'atlas-development', name: 'Atlas Development', type: 'developer', description: 'Land assemblage / rezoning developer that originated the Project Sail Coweta GA site for Prologis.' },
+  { slug: 'georgialink-public-affairs', name: 'GeorgiaLink Public Affairs Group', type: 'lobbying_firm', description: 'GA lobbying firm; Arthur Edge IV represented Atlas Development on Project Sail at zoning.' },
+
+  // PowerHouse VA
+  { slug: 'american-real-estate-partners', name: 'American Real Estate Partners (AREP)', type: 'developer', description: 'Virginia-based real-estate investor; parent of PowerHouse Data Centers.', website: 'https://www.americanrepartners.com' },
+  { slug: 'harrison-street', name: 'Harrison Street', type: 'pe_firm', description: 'Chicago-based real-assets investor; JV partner on the ~$1B PowerHouse Virginia portfolio.', website: 'https://www.harrisonst.com' },
+
+  // CleanArc Caroline VA
+  { slug: '547-energy', name: '547 Energy', type: 'investor', description: 'Clean-energy investment firm; CleanArc founding investor.' },
+  { slug: 'snowhawk', name: 'Snowhawk', type: 'pe_firm', description: 'PE firm; majority owner of CleanArc after Sept 2025 investment.' },
+  { slug: 'townsend-group', name: 'The Townsend Group', type: 'investor', description: 'Real-assets manager; follow-on investor in CleanArc.', website: 'https://www.townsendgroup.com' },
+  { slug: 'nuveen', name: 'Nuveen', type: 'investor', description: 'TIAA asset manager; follow-on investor in CleanArc.', website: 'https://www.nuveen.com' },
+
+  // Potentia / Heartland IN
+  { slug: 'win-energy-remc', name: 'WIN Energy REMC', type: 'energy_utility', description: 'Indiana rural electric member cooperative; distribution utility for Heartland Industrial Park.', website: 'https://www.winenergyremc.com' },
+  { slug: 'hoosier-energy', name: 'Hoosier Energy', type: 'energy_utility', description: 'Indiana generation & transmission cooperative; upstream supplier to WIN Energy REMC.', website: 'https://www.hoosierenergy.com' },
+
+  // Coatue / Fluidstack / Anthropic
+  { slug: 'next-frontier', name: 'Next Frontier', type: 'developer', description: 'Coatue Management data-center real-estate vehicle; JV partner to Fluidstack on the 430 MW New Lebanon IN campus.' },
+  { slug: 'coatue-management', name: 'Coatue Management', type: 'investor', description: '$70B AUM tech-focused investment firm; launched Next Frontier and backed CoreWeave debt.', website: 'https://www.coatue.com', headquarters: 'New York, NY' },
+
+  // Meta El Paso
+  { slug: 'puct', name: 'Public Utility Commission of Texas', type: 'government_body', description: 'Texas state regulator; reviewing the McCloud 366 MW gas tariff for Meta El Paso.', website: 'https://www.puc.texas.gov' },
+
+  // Fort Bliss
+  { slug: 'department-of-defense', name: 'U.S. Department of Defense', type: 'government_body', description: 'Secure-enclave tenant on the Fort Bliss campus and Dugway Proving Ground sister site.', website: 'https://www.defense.gov' },
+
+  // CoreSite parent
+  { slug: 'american-tower', name: 'American Tower Corporation', type: 'tech_company', description: 'Wireless-infrastructure REIT; acquired CoreSite in 2021 for $10.1B.', website: 'https://www.americantower.com', ticker: 'AMT' },
+  { slug: 'coresite', name: 'CoreSite', type: 'developer', description: 'Carrier-neutral colocation operator; wholly-owned by American Tower. DE3 Denver active in 2026 community-permit dispute.', website: 'https://www.coresite.com' },
+
+  // Global AI / Humain / PIF chain
+  { slug: 'global-ai', name: 'Global AI', type: 'tech_company', description: 'AI infrastructure developer (led by former IBM execs); Windsor CO flagship; partnership with Saudi Humain.' },
+  // (humain already declared in Pass-3 block; omitted here to avoid dup)
+  { slug: 'saudi-pif', name: 'Public Investment Fund (Saudi Arabia)', type: 'sovereign_wealth', description: 'Saudi sovereign wealth fund; sole owner of Humain; $3B xAI investment.', headquarters: 'Riyadh, Saudi Arabia' },
+
+  // Prometheus partners
+  { slug: 'in-q-tel', name: 'In-Q-Tel', type: 'investor', description: 'CIA-affiliated strategic VC; backer of Prometheus Hyperscale.', website: 'https://www.iqt.org' },
+  { slug: 'lumen-technologies', name: 'Lumen Technologies', type: 'tech_company', description: 'Fiber / connectivity partner across Prometheus Hyperscale sites.', website: 'https://www.lumen.com', ticker: 'LUMN' },
+  { slug: 'conduit-power', name: 'Conduit Power', type: 'energy_utility', description: 'Power partner to Prometheus Hyperscale.' },
+  { slug: 'engie', name: 'Engie', type: 'energy_utility', description: 'French utility; Prometheus power partner; co-located gas + renewables.', website: 'https://www.engie.com' },
+
+  // Reno / Centra
+  { slug: 'columbia-capital', name: 'Columbia Capital', type: 'pe_firm', description: 'Digital-infra VC; lead investor in Centra ($230M round).', website: 'https://colcap.com' },
+
+  // Lakeland Equity / Cleveland (separate from Lakeland Equity Group above)
+  { slug: 'lake-to-river', name: 'Lake to River Economic Development', type: 'other', description: 'NE Ohio regional economic development partnership shepherding the NDA-protected Project Milo siting in Hubbard.', website: 'https://www.laketoriver.com' },
+
+  // Socorro NM
+  { slug: 'nm-tech', name: 'New Mexico Institute of Mining and Technology', type: 'other', description: 'Research university in Socorro; partnership discussions with Green Data on workforce + research.', website: 'https://www.nmt.edu' },
+  { slug: 'socorro-electric-cooperative', name: 'Socorro Electric Cooperative', type: 'energy_utility', description: 'Rural electric coop serving Socorro County NM; Green Data pitched its board March 2025.' },
 ];

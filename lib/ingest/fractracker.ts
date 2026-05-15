@@ -59,6 +59,8 @@ interface Row {
   Lat?: string;
   Long?: string;
   Status?: string;
+  'Location confidence'?: string;
+  'Location determination'?: string;
   Operator?: string;
   Tenant?: string;
   MW?: string;
@@ -73,6 +75,14 @@ interface Row {
   'Petition_URL'?: string;
   Source?: string;
   'Date updated'?: string;
+}
+
+function toConfidence(s: string | undefined): 'low' | 'medium' | 'high' | null {
+  const k = (s ?? '').trim().toLowerCase();
+  if (k === 'high') return 'high';
+  if (k === 'medium') return 'medium';
+  if (k === 'low') return 'low';
+  return null;
 }
 
 export interface IngestReport {
@@ -192,7 +202,10 @@ export async function ingestFracTracker(opts: {
       return /^https?:\/\//.test(u);
     });
 
-    const row: Partial<DataCenter> = {
+    const row: Partial<DataCenter> & {
+      data_source?: string;
+      location_confidence?: 'low' | 'medium' | 'high' | null;
+    } = {
       id: `ft-${fid}`,
       slug,
       name,
@@ -216,6 +229,8 @@ export async function ingestFracTracker(opts: {
       description: desc.length ? desc.join(' ') : undefined,
       source_urls: filteredSources,
       last_verified_at: new Date().toISOString().slice(0, 10),
+      data_source: 'fractracker',
+      location_confidence: toConfidence(r['Location confidence']),
     };
 
     upserts.push(row);

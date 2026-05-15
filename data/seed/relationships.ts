@@ -955,4 +955,210 @@ export const ORG_RELATIONSHIPS: OrgRelationshipEdge[] = [
     value_usd: 1_000_000_000,
     source_url: 'https://www.nucnet.org/news/constellation-secures-usd1-billion-federal-loann-for-three-mile-island-restart-11-3-2025',
   },
+
+  // ── Pass-5 enrichment edges ──────────────────────────────────────────
+
+  // Blackstone → Tallgrass → Crusoe Project Jade
+  {
+    source: 'blackstone-infrastructure',
+    target: 'tallgrass-energy',
+    relationship: 'owns',
+    description: 'Blackstone Infrastructure majority-owns Tallgrass Energy.',
+    source_url: 'https://www.datacenterdynamics.com/en/news/crusoe-gets-go-ahead-for-18gw-data-center-campus-and-power-plant-in-cheyenne-wyoming/',
+  },
+  {
+    source: 'tallgrass-energy',
+    target: 'crusoe-energy',
+    relationship: 'joint_venture',
+    description: '~$7B committed to BFC Power + Cheyenne Power Hub gas generation for Project Jade.',
+    value_usd: 7_000_000_000,
+    source_url: 'https://newprojectmedia.com/origination-crusoe-tallgrass-receive-laramie-county-wy-approvals-for-usd-50bn-2-7-gw-data-center-and-power-plant-project/',
+  },
+
+  // Project Sail / Prologis chain
+  {
+    source: 'prologis',
+    target: 'atlas-development',
+    relationship: 'partners_with',
+    description: 'Prologis under contract to take the 832-acre Coweta GA site originated by Atlas Development.',
+    source_url: 'https://www.ajc.com/news/2025/05/a-new-group-steps-in-to-develop-17b-project-sail-data-center-near-atlanta/',
+  },
+  {
+    source: 'georgialink-public-affairs',
+    target: 'atlas-development',
+    relationship: 'lobbies_for',
+    description: 'Arthur Edge IV of GeorgiaLink represented Atlas Development on Project Sail at zoning.',
+    source_url: 'https://www.desmog.com/2025/08/18/arthur-edge-data-center-lobbyists-project-sail-sargent-coweta-county-georgia/',
+  },
+
+  // PowerHouse VA
+  {
+    source: 'american-real-estate-partners',
+    target: 'powerhouse-data-centers',
+    relationship: 'owns',
+    description: 'PowerHouse Data Centers is wholly owned by AREP.',
+    source_url: 'https://www.americanrepartners.com/property-types/data-centers',
+  },
+  {
+    source: 'harrison-street',
+    target: 'powerhouse-data-centers',
+    relationship: 'invests_in',
+    description: '~$1B JV to build out six PowerHouse data centers across Northern Virginia.',
+    value_usd: 1_000_000_000,
+    source_url: 'https://www.harrisonst.com/wp-content/uploads/2024/02/PowerHouse-95.pdf',
+  },
+
+  // CleanArc Caroline VA cap table
+  {
+    source: '547-energy',
+    target: 'cleanarc',
+    relationship: 'invests_in',
+    description: 'Founding investor in CleanArc.',
+  },
+  {
+    source: 'snowhawk',
+    target: 'cleanarc',
+    relationship: 'owns',
+    description: 'Majority owner of CleanArc after Sept 2025 investment.',
+    source_url: 'https://www.datacenterdynamics.com/en/news/cleanarc-gets-green-light-for-600mw-data-center-campus-in-caroline-county-virginia/',
+  },
+  {
+    source: 'townsend-group',
+    target: 'cleanarc',
+    relationship: 'invests_in',
+    description: 'Real-assets manager; follow-on investor.',
+  },
+  {
+    source: 'nuveen',
+    target: 'cleanarc',
+    relationship: 'invests_in',
+    description: 'TIAA asset manager; follow-on investor.',
+  },
+
+  // Coatue / Fluidstack / Google / Anthropic structure
+  {
+    source: 'coatue-management',
+    target: 'next-frontier',
+    relationship: 'owns',
+    description: 'Coatue launched Next Frontier as its data-center land-development vehicle.',
+    source_url: 'https://techcrunch.com/2026/05/01/coatue-has-a-plan-to-buy-up-land-for-data-centers-possibly-for-anthropic/',
+  },
+  {
+    source: 'next-frontier',
+    target: 'fluidstack',
+    relationship: 'joint_venture',
+    description: 'JV building the 430 MW New Lebanon IN campus.',
+    source_url: 'https://www.datacenterdynamics.com/en/news/coatue-sets-up-data-center-venture-partners-with-fluidstack-for-430mw-campus-in-indiana/',
+  },
+  {
+    source: 'google',
+    target: 'fluidstack',
+    relationship: 'partners_with',
+    description: 'Google guarantees Fluidstack\'s leases — assumes the lease or pays a termination fee if Fluidstack defaults — at New Lebanon and other Fluidstack sites.',
+    source_url: 'https://www.datacenterdynamics.com/en/news/coatue-sets-up-data-center-venture-partners-with-fluidstack-for-430mw-campus-in-indiana/',
+  },
+
+  // Saudi PIF → Humain → Global AI
+  {
+    source: 'saudi-pif',
+    target: 'humain',
+    relationship: 'owns',
+    description: 'PIF launched Humain May 2025 and wholly owns it.',
+    source_url: 'https://www.pif.gov.sa/en/news-and-insights/press-releases/2025/hrh-crown-prince-launches-humain-as-global-ai-powerhouse/',
+  },
+  {
+    source: 'humain',
+    target: 'global-ai',
+    relationship: 'joint_venture',
+    description: 'Humain to deploy compute capacity in Global AI US facilities including Windsor CO.',
+    source_url: 'https://www.datacenterdynamics.com/en/news/global-ai-set-to-develop-data-center-outside-denver-colorado/',
+  },
+  {
+    source: 'humain',
+    target: 'blackstone',
+    relationship: 'joint_venture',
+    description: '$3B data-center venture announced in parallel with the Global AI partnership.',
+    value_usd: 3_000_000_000,
+  },
+
+  // Prometheus / Oklo / In-Q-Tel
+  {
+    source: 'oklo',
+    target: 'prometheus-hyperscale',
+    relationship: 'supplies',
+    description: '20-year LOI for ~100 MW from Aurora fast-fission reactors covering all Prometheus sites.',
+    source_url: 'https://www.prometheushyperscale.com/news/oklo-partners-with-wyoming-hyperscale-to-deliver-100-megawatts-to-its-data-centers',
+  },
+  {
+    source: 'in-q-tel',
+    target: 'prometheus-hyperscale',
+    relationship: 'invests_in',
+    description: 'CIA-affiliated strategic VC; disclosed backer.',
+    source_url: 'https://www.datacenterdynamics.com/en/analysis/prometheus-hyperscale-in-harmony-with-nature/',
+  },
+  {
+    source: 'lumen-technologies',
+    target: 'prometheus-hyperscale',
+    relationship: 'supplies',
+    description: 'Fiber and connectivity across Prometheus sites.',
+    source_url: 'https://www.prnewswire.com/news-releases/lumen-partners-with-prometheus-hyperscale-to-enhance-connectivity-for-sustainable-ai-driven-data-centers-302333590.html',
+  },
+  {
+    source: 'engie',
+    target: 'prometheus-hyperscale',
+    relationship: 'supplies',
+    description: 'Power partner for the Prometheus portfolio.',
+  },
+  {
+    source: 'conduit-power',
+    target: 'prometheus-hyperscale',
+    relationship: 'supplies',
+    description: 'Power partner for the Prometheus portfolio.',
+  },
+
+  // CoreSite parent
+  {
+    source: 'american-tower',
+    target: 'coresite',
+    relationship: 'owns',
+    description: 'American Tower acquired CoreSite in 2021 for $10.1B.',
+    value_usd: 10_100_000_000,
+  },
+
+  // Centra / Columbia Capital
+  {
+    source: 'columbia-capital',
+    target: 'centra',
+    relationship: 'invests_in',
+    description: '$230M growth round to fund Reno (Keystone Ave) + Minneapolis build-outs.',
+    value_usd: 230_000_000,
+    source_url: 'https://www.datacenterdynamics.com/en/news/columbia-capital-leads-230m-centra-investment-for-data-center-build-outs-in-reno-and-minneapolis/',
+  },
+
+  // Carlyle / Copia Power
+  {
+    source: 'carlyle',
+    target: 'copia-power',
+    relationship: 'invests_in',
+    description: 'Carlyle provides project equity and parent guarantees for the $11B Monarch Lyon County development.',
+    source_url: 'https://newprojectmedia.com/origination-copia-power-plans-usd-11bn-data-center-campus-with-carlyle-backing-in-lyon-county-nv/',
+  },
+
+  // Beale / Blue Owl
+  {
+    source: 'blue-owl',
+    target: 'beale-infrastructure',
+    relationship: 'owns',
+    description: 'Beale Infrastructure is owned by Blue Owl Capital.',
+    source_url: 'https://www.datacenterdynamics.com/en/news/amazon-backs-out-of-project-blue-data-center-campus-in-arizona-report/',
+  },
+
+  // US Army / Carlyle Fort Bliss
+  {
+    source: 'carlyle',
+    target: 'us-army',
+    relationship: 'contracted_by',
+    description: 'Conditional Army selection to develop the Fort Bliss 3 GW hyperscale data center on ~1,384 acres.',
+    source_url: 'https://www.army.mil/article/291360/army_reaches_conditional_agreement_with_private_industry_for_hyperscaled_data_centers',
+  },
 ];

@@ -56,7 +56,8 @@ export type DCOrgRelationship =
   | 'owns'
   | 'joint_venture'
   | 'permits'
-  | 'lobbies_for';
+  | 'lobbies_for'
+  | 'partners_with';
 
 export type OrgRelationship =
   | 'owns'
@@ -100,6 +101,13 @@ export interface DataCenter {
   // Used to narrow the detail-panel House representative to the actual
   // jurisdiction rather than every House member in the state.
   house_district?: string;
+  // Where this record came from: 'editorial' (hand-curated), 'fractracker',
+  // 'datacentertracker', etc. Surfaces in the detail panel.
+  data_source?: string;
+  // How well-pinned the lat/lng is. 'high' = known parcel; 'medium' =
+  // approximate (within a few km); 'low' = city- or county-center guess.
+  // Map filters Low by default.
+  location_confidence?: 'low' | 'medium' | 'high' | null;
 }
 
 export interface Organization {

@@ -332,9 +332,24 @@ export async function listDataCenters(filters: {
   states?: string[];
   search?: string;
   limit?: number;
+  /** Minimum location confidence. Default 'medium' — drops the ~50 low-confidence
+   * FracTracker imports (city-centroid guesses) from the default map view. */
+  minConfidence?: 'low' | 'medium' | 'high';
 } = {}): Promise<DcMarker[]> {
   await hydrate();
   let rows: DataCenter[] = DATA_CENTERS;
+
+  // Confidence filter — editorial rows have confidence='high', so they always
+  // pass any threshold. Only the low-confidence FracTracker imports get dropped.
+  const minConf = filters.minConfidence ?? 'medium';
+  const rank = { low: 1, medium: 2, high: 3 } as const;
+  const threshold = rank[minConf];
+  rows = rows.filter((r) => {
+    const c = r.location_confidence;
+    if (c == null) return true; // null = unknown, keep
+    return rank[c] >= threshold;
+  });
+
   if (filters.status?.length) rows = rows.filter((r) => filters.status!.includes(r.status));
   if (filters.states?.length) rows = rows.filter((r) => filters.states!.includes(r.state));
   if (filters.search) {

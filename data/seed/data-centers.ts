@@ -1258,7 +1258,11 @@ export const DATA_CENTERS: DataCenter[] = [
       'https://about.fb.com/news/2025/10/metas-new-ai-optimized-data-center-el-paso/',
       'https://www.cnbc.com/2026/03/26/meta-to-spend-10-billion-on-ai-data-center-in-el-paso-1gw-by-2028.html',
     ],
-    organization_slugs: [{ slug: 'meta', relationship: 'operates' }],
+    organization_slugs: [
+      { slug: 'meta', relationship: 'operates' },
+      { slug: 'el-paso-electric', relationship: 'supplies_energy' },
+      { slug: 'puct', relationship: 'permits' },
+    ],
     last_verified_at: '2026-05-14',
   },
 
@@ -1953,6 +1957,7 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'centra', relationship: 'operates' },
+      { slug: 'columbia-capital', relationship: 'funds' },
       { slug: 'nv-energy', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2036,7 +2041,7 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'copia-power', relationship: 'develops' },
-      { slug: 'carlyle', relationship: 'owns' },
+      { slug: 'carlyle', relationship: 'funds' },
       { slug: 'nv-energy', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2066,6 +2071,8 @@ export const DATA_CENTERS: DataCenter[] = [
       'https://www.denvergazette.com/2026/05/12/denver-gets-closer-to-imposing-data-center-moratorium/',
     ],
     organization_slugs: [
+      { slug: 'coresite', relationship: 'operates' },
+      { slug: 'american-tower', relationship: 'owns' },
       { slug: 'xcel', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2093,6 +2100,9 @@ export const DATA_CENTERS: DataCenter[] = [
       'https://www.weld.gov/Newsroom/2026-News/Weld-County-extends-timeline-for-proposed-data-center-ordinance',
     ],
     organization_slugs: [
+      { slug: 'global-ai', relationship: 'operates' },
+      { slug: 'humain', relationship: 'partners_with' },
+      { slug: 'saudi-pif', relationship: 'funds' },
       { slug: 'tri-state-gt', relationship: 'supplies_energy' },
       { slug: 'xcel', relationship: 'supplies_energy' },
     ],
@@ -2120,6 +2130,10 @@ export const DATA_CENTERS: DataCenter[] = [
     organization_slugs: [
       { slug: 'prometheus-hyperscale', relationship: 'develops' },
       { slug: 'oklo', relationship: 'supplies_energy' },
+      { slug: 'in-q-tel', relationship: 'funds' },
+      { slug: 'lumen-technologies', relationship: 'supplies_energy' },
+      { slug: 'conduit-power', relationship: 'supplies_energy' },
+      { slug: 'engie', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
   },
@@ -2144,6 +2158,9 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'prometheus-hyperscale', relationship: 'develops' },
+      { slug: 'oklo', relationship: 'supplies_energy' },
+      { slug: 'in-q-tel', relationship: 'funds' },
+      { slug: 'lumen-technologies', relationship: 'supplies_energy' },
       { slug: 'tri-state-gt', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2175,7 +2192,9 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'crusoe-energy', relationship: 'develops' },
-      { slug: 'tallgrass', relationship: 'supplies_energy' },
+      { slug: 'tallgrass-energy', relationship: 'joint_venture' },
+      { slug: 'blackstone-infrastructure', relationship: 'funds' },
+      { slug: 'bloom-energy', relationship: 'supplies_energy' },
       { slug: 'black-hills-energy', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2205,6 +2224,10 @@ export const DATA_CENTERS: DataCenter[] = [
     organization_slugs: [
       { slug: 'prometheus-hyperscale', relationship: 'develops' },
       { slug: 'spiritus', relationship: 'supplies_energy' },
+      { slug: 'oklo', relationship: 'supplies_energy' },
+      { slug: 'in-q-tel', relationship: 'funds' },
+      { slug: 'lumen-technologies', relationship: 'supplies_energy' },
+      { slug: 'engie', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
   },
@@ -2233,6 +2256,7 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'us-army', relationship: 'permits' },
+      { slug: 'department-of-defense', relationship: 'permits' },
       { slug: 'carlyle', relationship: 'develops' },
       { slug: 'el-paso-electric', relationship: 'supplies_energy' },
     ],
@@ -2263,6 +2287,8 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'green-data', relationship: 'develops' },
+      { slug: 'nm-tech', relationship: 'partners_with' },
+      { slug: 'socorro-electric-cooperative', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
   },
@@ -2317,6 +2343,7 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'beale-infrastructure', relationship: 'develops' },
+      { slug: 'blue-owl', relationship: 'owns' },
       { slug: 'tucson-electric-power', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2343,6 +2370,7 @@ export const DATA_CENTERS: DataCenter[] = [
       'https://hntrbrk.com/meta-data-centers/',
     ],
     organization_slugs: [
+      { slug: 'lake-to-river', relationship: 'lobbies_for' },
       { slug: 'aep', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2427,6 +2455,8 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'prologis', relationship: 'develops' },
+      { slug: 'atlas-development', relationship: 'develops' },
+      { slug: 'georgialink-public-affairs', relationship: 'lobbies_for' },
       { slug: 'georgia-power', relationship: 'supplies_energy' },
       { slug: 'southern-co', relationship: 'owns' },
     ],
@@ -2456,6 +2486,8 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'powerhouse-data-centers', relationship: 'develops' },
+      { slug: 'american-real-estate-partners', relationship: 'owns' },
+      { slug: 'harrison-street', relationship: 'funds' },
       { slug: 'dominion-energy', relationship: 'supplies_energy' },
       { slug: 'pjm', relationship: 'supplies_energy' },
     ],
@@ -2514,6 +2546,10 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'cleanarc', relationship: 'develops' },
+      { slug: '547-energy', relationship: 'funds' },
+      { slug: 'snowhawk', relationship: 'owns' },
+      { slug: 'townsend-group', relationship: 'funds' },
+      { slug: 'nuveen', relationship: 'funds' },
       { slug: 'dominion-energy', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
@@ -2544,6 +2580,8 @@ export const DATA_CENTERS: DataCenter[] = [
     ],
     organization_slugs: [
       { slug: 'potentia', relationship: 'develops' },
+      { slug: 'win-energy-remc', relationship: 'supplies_energy' },
+      { slug: 'hoosier-energy', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
   },
@@ -2570,9 +2608,13 @@ export const DATA_CENTERS: DataCenter[] = [
       'https://techcrunch.com/2026/05/01/coatue-has-a-plan-to-buy-up-land-for-data-centers-possibly-for-anthropic/',
     ],
     organization_slugs: [
-      { slug: 'coatue', relationship: 'develops' },
+      { slug: 'coatue-management', relationship: 'funds' },
+      { slug: 'next-frontier', relationship: 'develops' },
       { slug: 'fluidstack', relationship: 'operates' },
       { slug: 'anthropic', relationship: 'operates' },
+      { slug: 'google', relationship: 'funds' },
+      { slug: 'win-energy-remc', relationship: 'supplies_energy' },
+      { slug: 'hoosier-energy', relationship: 'supplies_energy' },
     ],
     last_verified_at: '2026-05-15',
   },

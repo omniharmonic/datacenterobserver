@@ -33,9 +33,16 @@ function fmtMoney(n?: number) {
   return `$${n.toLocaleString()}`;
 }
 
+// Parse 'YYYY-MM-DD' as local — see EventsClient for the same fix.
+function parseLocalDate(d: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(d);
+}
+
 function fmtDate(d?: string) {
   if (!d) return null;
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return parseLocalDate(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function partyColor(party?: string) {
