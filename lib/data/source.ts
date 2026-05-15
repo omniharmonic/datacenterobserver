@@ -41,13 +41,17 @@ async function hydrate(): Promise<void> {
 
   _hydratingPromise = (async () => {
     const sb = getSupabase();
+    // Supabase silently caps .select() at 1000 rows by default; .range() lifts
+    // it. Setting an upper bound of 10k covers us well past the 1.5k FracTracker
+    // import while still being a sane safety ceiling.
+    const RANGE_MAX = 9999;
     const [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR] = await Promise.all([
-      sb.from('data_centers').select('*'),
-      sb.from('organizations').select('*'),
-      sb.from('officials').select('*'),
-      sb.from('events').select('*'),
-      sb.from('dc_organizations').select('*'),
-      sb.from('org_relationships').select('*'),
+      sb.from('data_centers').select('*').range(0, RANGE_MAX),
+      sb.from('organizations').select('*').range(0, RANGE_MAX),
+      sb.from('officials').select('*').range(0, RANGE_MAX),
+      sb.from('events').select('*').range(0, RANGE_MAX),
+      sb.from('dc_organizations').select('*').range(0, RANGE_MAX),
+      sb.from('org_relationships').select('*').range(0, RANGE_MAX),
     ]);
 
     for (const r of [dcsR, orgsR, offsR, evsR, dcOrgsR, orgRelsR]) {
@@ -275,6 +279,31 @@ export interface OrgDetail extends Organization {
 const CONTROL_RELS = new Set(['owns', 'acquired', 'subsidiary_of', 'invests_in', 'joint_venture']);
 
 // ─── Public API (all async) ────────────────────────────────────────────
+
+// ── PostGIS radius query ───────────────────────────────────────────────
+// Calls the `data_centers_within(lat, lng, radius_km)` RPC. Returns nearest
+// first with a `distance_km` field. Does NOT use the in-memory cache —
+// PostGIS does the heavy lifting in Postgres and returns a small result set.
+
+export interface NearbyDc extends DcMarker {
+  distance_km: number;
+}
+
+export async function listNearby(
+  lat: number,
+  lng: number,
+  radiusKm: number,
+  limit = 100,
+): Promise<NearbyDc[]> {
+  const sb = getSupabase();
+  const { data, error } = await sb.rpc('data_centers_within', {
+    p_lat: lat,
+    p_lng: lng,
+    p_radius_km: radiusKm,
+  });
+  if (error) throw new Error(`listNearby failed: ${error.message}`);
+  return ((data ?? []) as NearbyDc[]).slice(0, limit);
+}
 
 export async function listDataCenters(filters: {
   status?: string[];
